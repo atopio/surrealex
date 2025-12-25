@@ -6,9 +6,9 @@ pub mod traits;
 use std::marker::PhantomData;
 
 use crate::{
-    enums::Direction,
+    enums::{Condition, Direction, Sort},
     states::{DefaultState, FromReady, SelectState},
-    structs::{SelectData, SelectField},
+    structs::{OrderTerm, SelectData, SelectField},
     traits::ToSelectField,
 };
 
@@ -32,7 +32,7 @@ pub struct QueryBuilder<S, D> {
 impl QueryBuilder<DefaultState, ()> {
     pub fn select<T: ToSelectField>(items: Vec<T>) -> QueryBuilder<SelectState, SelectData> {
         let data = SelectData {
-            items: items
+            fields: items
                 .into_iter()
                 .map(|item| item.to_select_field())
                 .collect(),
@@ -63,7 +63,7 @@ impl QueryBuilder<SelectState, SelectData> {
         let alias = params.alias;
 
         // Push it into our unified items list
-        self.data.items.push(SelectField { name, alias });
+        self.data.fields.push(SelectField { name, alias });
 
         self
     }
@@ -89,8 +89,36 @@ impl QueryBuilder<SelectState, SelectData> {
 }
 
 impl QueryBuilder<FromReady, SelectData> {
+    pub fn r#where<T: Into<Condition>>(mut self, condition: T) -> Self {
+        self.data.where_clause.push(condition.into());
+        self
+    }
+
+    pub fn order_by(mut self, field: &str, order: Sort, numeric: bool) -> Self {
+        let order_term = OrderTerm {
+            field: field.to_string(),
+            order,
+            numeric,
+            collate: false,
+        };
+        self.data.order_by.push(order_term.to_string());
+        self
+    }
+
+    pub fn order_random(mut self) -> Self {
+        self.data.order_by = vec!["RAND()".to_string()];
+        self
+    }
+
     pub fn limit(mut self, limit: u64) -> Self {
         self.data.limit = Some(limit);
+        self
+    }
+
+    pub fn fetch(mut self, fields: Vec<&str>) -> Self {
+        self.data
+            .fetch_fields
+            .extend(fields.iter().map(|s| s.to_string()));
         self
     }
 
@@ -99,7 +127,7 @@ impl QueryBuilder<FromReady, SelectData> {
 
         let fields: Vec<String> = self
             .data
-            .items
+            .fields
             .iter()
             .map(|field| {
                 if let Some(alias) = &field.alias {
@@ -120,8 +148,31 @@ impl QueryBuilder<FromReady, SelectData> {
             }
         }
 
+        if !self.data.where_clause.is_empty() {
+            let conditions: String = self
+                .data
+                .where_clause
+                .iter()
+                .map(|cond| cond.to_string())
+                .collect::<Vec<String>>()
+                .join(" AND ");
+
+            query.push_str(" WHERE ");
+            query.push_str(&conditions);
+        }
+
+        if !self.data.order_by.is_empty() {
+            let order_terms = self.data.order_by.join(", ");
+            query.push_str(&format!(" ORDER BY {}", order_terms));
+        }
+
         if let Some(limit) = self.data.limit {
             query.push_str(&format!(" LIMIT {}", limit));
+        }
+
+        if !self.data.fetch_fields.is_empty() {
+            let fetch_fields = self.data.fetch_fields.join(", ");
+            query.push_str(&format!(" FETCH {}", fetch_fields));
         }
 
         query
