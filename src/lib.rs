@@ -7,6 +7,7 @@ pub(crate) mod states;
 pub mod structs;
 pub mod traits;
 
+use std::fmt::Write;
 use std::marker::PhantomData;
 
 use crate::{
@@ -158,11 +159,8 @@ impl QueryBuilder<FromReady, SelectData> {
         query.push_str(&fields.join(", "));
 
         if let Some(table) = &self.data.table {
-            if self.data.only {
-                query.push_str(&format!(" FROM ONLY {}", table));
-            } else {
-                query.push_str(&format!(" FROM {}", table));
-            }
+            let only = if self.data.only { " ONLY" } else { "" };
+            let _ = write!(query, " FROM{only} {table}");
         }
 
         if !self.data.where_clause.is_empty() {
@@ -180,20 +178,20 @@ impl QueryBuilder<FromReady, SelectData> {
 
         if !self.data.order_by.is_empty() {
             let order_terms = self.data.order_by.join(", ");
-            query.push_str(&format!(" ORDER BY {}", order_terms));
+            let _ = write!(query, " ORDER BY {order_terms}");
         }
 
         if let Some(limit) = self.data.limit {
-            query.push_str(&format!(" LIMIT {}", limit));
+            let _ = write!(query, " LIMIT {limit}");
         }
 
         if let Some(offset) = self.data.start_at {
-            query.push_str(&format!(" START AT {}", offset));
+            let _ = write!(query, " START AT {offset}");
         }
 
         if !self.data.fetch_fields.is_empty() {
             let fetch_fields = self.data.fetch_fields.join(", ");
-            query.push_str(&format!(" FETCH {}", fetch_fields));
+            let _ = write!(query, " FETCH {fetch_fields}");
         }
 
         query
