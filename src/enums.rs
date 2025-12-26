@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::{structs::SelectField, traits::ToSelectField};
+
 /// Direction of graph traversal arrows.
 #[derive(Debug, Clone)]
 pub enum Direction {
@@ -59,8 +61,9 @@ impl From<String> for Condition {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum Sort {
+    #[default]
     Asc,
     Desc,
 }
@@ -73,9 +76,18 @@ impl Display for Sort {
         }
     }
 }
+#[derive(Debug, Clone, Default)]
+pub enum SelectionFields {
+    /// Equivalent to .*
+    #[default]
+    All,
+    /// Equivalent to .{field1, field2 AS alias}
+    Fields(Vec<SelectField>),
+}
 
-impl Default for Sort {
-    fn default() -> Self {
-        Sort::Asc
+impl SelectionFields {
+    /// Helper to create a Fields variant from anything that implements ToSelectField
+    pub fn from_items<T: ToSelectField>(items: Vec<T>) -> Self {
+        SelectionFields::Fields(items.into_iter().map(|i| i.to_select_field()).collect())
     }
 }

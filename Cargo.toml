@@ -8,4 +8,8 @@ keywords = ["surrealdb", "surrealql", "query-builder", "rust"]
 license = "MIT"
 repository = "https://github.com/MordechaiHadad/surrealex"
 
-[dependencies]
+[features]
+macros = []
+
+[dev-dependencies]
+surrealex = { path = ".", features = ["macros"] }
