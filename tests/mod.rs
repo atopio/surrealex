@@ -106,6 +106,16 @@ fn where_simple_builds() {
 }
 
 #[test]
+fn where_chaining_multiple_times_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .r#where("age > 18")
+        .r#where("active = true")
+        .build();
+    assert_eq!(sql, "SELECT id FROM users WHERE age > 18 AND active = true");
+}
+
+#[test]
 fn complex_where_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("t")
