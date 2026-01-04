@@ -51,8 +51,9 @@ impl SelectBuilder {
         self
     }
 
-    pub fn subquery(mut self, subquery: FromReady, alias: Option<&str>) -> Self {
-        let field = match alias {
+    pub fn subquery(mut self, subquery: FromReady, alias: impl Into<Option<&'static str>>) -> Self {
+        let alias_opt = alias.into();
+        let field = match alias_opt {
             Some(a) => (subquery, a).to_select_field(),
             None => subquery.to_select_field(),
         };
