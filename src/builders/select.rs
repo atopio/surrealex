@@ -4,6 +4,7 @@ use crate::{
     enums::{Condition, Direction, SelectionFields, Sort},
     internal_macros::push_clause,
     structs::{GraphExpandParams, OrderTerm, SelectData, SelectField},
+    traits::ToSelectField,
 };
 
 pub struct SelectBuilder {
@@ -50,6 +51,16 @@ impl SelectBuilder {
         self
     }
 
+    pub fn subquery(mut self, subquery: FromReady, alias: Option<&str>) -> Self {
+        let field = match alias {
+            Some(a) => (subquery, a).to_select_field(),
+            None => subquery.to_select_field(),
+        };
+
+        self.data.fields.push(field);
+        self
+    }
+
     pub fn from(mut self, table: &str) -> FromReady {
         self.data.table = Some(table.to_string());
         self.data.only = false;
@@ -67,6 +78,7 @@ impl SelectBuilder {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct FromReady {
     data: SelectData,
 }
@@ -166,5 +178,27 @@ impl FromReady {
         }
 
         query
+    }
+}
+
+impl ToSelectField for FromReady {
+    fn to_select_field(self) -> SelectField {
+        let subquery = self.build();
+
+        SelectField {
+            name: format!("({})", subquery),
+            alias: None,
+        }
+    }
+}
+
+impl ToSelectField for (FromReady, &str) {
+    fn to_select_field(self) -> SelectField {
+        let subquery = self.0.clone().build();
+
+        SelectField {
+            name: format!("({})", subquery),
+            alias: Some(self.1.to_string()),
+        }
     }
 }

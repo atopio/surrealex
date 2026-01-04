@@ -279,3 +279,44 @@ fn multi_graph_traverse_nested_and_aliases_builds() {
         "SELECT id, ->a->b.{x AS x_alias, y AS y_alias} AS ab, <-c->d.* AS cd FROM root"
     );
 }
+
+#[test]
+fn select_subquery_field_builds() {
+    let sub = QueryBuilder::select(surrealex::fields!("id")).from("users");
+
+    let sql = QueryBuilder::select(surrealex::fields!(sub))
+        .from("t")
+        .build();
+
+    assert_eq!(sql, "SELECT (SELECT id FROM users) FROM t");
+}
+
+#[test]
+fn select_subquery_field_with_alias_builds() {
+    let sub = QueryBuilder::select(surrealex::fields!("id", "name")).from("accounts");
+
+    let sql = QueryBuilder::select(surrealex::fields!((sub, "acct")))
+        .from("log")
+        .build();
+
+    assert_eq!(
+        sql,
+        "SELECT (SELECT id, name FROM accounts) AS acct FROM log"
+    );
+}
+
+#[test]
+fn select_subquery_with_where_and_outer_other_field_builds() {
+    let sub = QueryBuilder::select(surrealex::fields!("count"))
+        .from("visits")
+        .r#where("page = 'home'");
+
+    let sql = QueryBuilder::select(surrealex::fields!("url", sub))
+        .from("pages")
+        .build();
+
+    assert_eq!(
+        sql,
+        "SELECT url, (SELECT count FROM visits WHERE page = 'home') FROM pages"
+    );
+}

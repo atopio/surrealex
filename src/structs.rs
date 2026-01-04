@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::enums::{Condition, Direction, SelectionFields, Sort};
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct SelectData {
     pub fields: Vec<SelectField>,
     pub table: Option<String>,

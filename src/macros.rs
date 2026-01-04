@@ -4,7 +4,7 @@ macro_rules! fields {
     (all) => { $crate::enums::SelectionFields::All };
     ($($item:expr),*) => {
         $crate::enums::SelectionFields::Fields(vec![
-            $( $crate::traits::ToSelectField::to_select_field(&$item) ),*
+            $( $crate::traits::ToSelectField::to_select_field($item) ),*
         ])
     };
 }
