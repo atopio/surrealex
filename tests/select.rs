@@ -320,3 +320,20 @@ fn select_subquery_with_where_and_outer_other_field_builds() {
         "SELECT url, (SELECT count FROM visits WHERE page = 'home') FROM pages"
     );
 }
+
+#[test]
+fn select_star_and_subquery_field_builds() {
+    let sub = QueryBuilder::select(surrealex::fields!("recent"))
+        .from("sessions")
+        .order_by("ts", Sort::Desc, false, false)
+        .limit(1);
+
+    let sql = QueryBuilder::select(surrealex::fields!(*, sub))
+        .from("users")
+        .build();
+
+    assert_eq!(
+        sql,
+        "SELECT *, (SELECT recent FROM sessions ORDER BY ts DESC LIMIT 1) FROM users"
+    );
+}
