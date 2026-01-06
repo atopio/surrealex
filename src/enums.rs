@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
-use crate::{structs::SelectField, traits::ToSelectField};
+use crate::{
+    traits::ToSelectField,
+    types::select::{OrderOptions, SelectField},
+};
 
 /// Direction of graph traversal arrows.
 #[derive(Debug, Clone)]
@@ -76,6 +79,26 @@ impl Display for Sort {
         }
     }
 }
+
+impl From<Sort> for OrderOptions {
+    fn from(direction: Sort) -> Self {
+        Self {
+            direction,
+            ..Default::default()
+        }
+    }
+}
+
+impl Sort {
+    pub fn numeric(self) -> OrderOptions {
+        OrderOptions::from(self).numeric()
+    }
+
+    pub fn collate(self) -> OrderOptions {
+        OrderOptions::from(self).collate()
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub enum SelectionFields {
     /// Equivalent to .*

@@ -7,11 +7,12 @@ pub mod builders;
 pub(crate) mod internal_macros;
 pub mod structs;
 pub mod traits;
+pub mod types;
 
 use crate::{
     builders::select::SelectBuilder,
     enums::SelectionFields,
-    structs::{SelectData, SelectField},
+    types::select::{SelectData, SelectField},
 };
 
 #[derive(Debug)]

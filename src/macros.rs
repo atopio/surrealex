@@ -13,7 +13,7 @@ macro_rules! fields {
 
     // 3. The "Internal Arm" that converts tokens to SelectFields
     (@item *) => {
-        $crate::structs::SelectField {
+        $crate::types::select::SelectField {
             name: "*".to_string(),
             alias: None,
         }

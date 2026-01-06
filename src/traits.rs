@@ -1,4 +1,4 @@
-use crate::structs::SelectField;
+use crate::types::select::SelectField;
 
 pub trait ToSelectField {
     fn to_select_field(self) -> SelectField;

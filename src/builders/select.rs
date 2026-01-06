@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
 use crate::{
-    enums::{Condition, Direction, SelectionFields, Sort},
+    enums::{Condition, Direction, SelectionFields},
     internal_macros::push_clause,
-    structs::{GraphExpandParams, OrderTerm, SelectData, SelectField},
     traits::ToSelectField,
+    types::select::{GraphExpandParams, OrderOptions, OrderTerm, SelectData, SelectField},
 };
 
 pub struct SelectBuilder {
@@ -51,13 +51,14 @@ impl SelectBuilder {
         self
     }
 
-    pub fn subquery(mut self, subquery: FromReady, alias: impl Into<Option<&'static str>>) -> Self {
-        let alias_opt = alias.into();
-        let field = match alias_opt {
-            Some(a) => (subquery, a).to_select_field(),
-            None => subquery.to_select_field(),
-        };
+    pub fn subquery(mut self, subquery: FromReady) -> Self {
+        let field = subquery.to_select_field();
+        self.data.fields.push(field);
+        self
+    }
 
+    pub fn subquery_as(mut self, subquery: FromReady, alias: &str) -> Self {
+        let field = (subquery, alias).to_select_field();
         self.data.fields.push(field);
         self
     }
@@ -90,13 +91,16 @@ impl FromReady {
         self
     }
 
-    pub fn order_by(mut self, field: &str, order: Sort, numeric: bool, collate: bool) -> Self {
+    pub fn order_by(mut self, field: &str, order: impl Into<OrderOptions>) -> Self {
+        let opt = order.into();
+
         let order_term = OrderTerm {
             field: field.to_string(),
-            order,
-            numeric,
-            collate,
+            direction: opt.direction,
+            numeric: opt.numeric,
+            collate: opt.collate,
         };
+
         self.data.order_by.push(order_term.to_string());
         self
     }

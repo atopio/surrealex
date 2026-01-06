@@ -1,6 +1,6 @@
 use surrealex::QueryBuilder;
 use surrealex::enums::{Condition, Direction, Sort};
-use surrealex::structs::GraphExpandParams;
+use surrealex::types::select::GraphExpandParams;
 
 #[test]
 fn select_single_field_from_builds() {
@@ -172,7 +172,7 @@ fn fetch_with_graph_and_where_builds() {
 fn order_by_asc_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("t")
-        .order_by("name", Sort::Asc, false, false)
+        .order_by("name", Sort::Asc)
         .build();
     assert_eq!(sql, "SELECT id FROM t ORDER BY name ASC");
 }
@@ -181,7 +181,7 @@ fn order_by_asc_builds() {
 fn order_by_desc_numeric_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
         .from("scores")
-        .order_by("score", Sort::Desc, true, false)
+        .order_by("score", Sort::Desc.numeric())
         .build();
     assert_eq!(sql, "SELECT * FROM scores ORDER BY score NUMERIC DESC");
 }
@@ -190,12 +190,25 @@ fn order_by_desc_numeric_builds() {
 fn order_by_multiple_terms_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("t")
-        .order_by("a", Sort::Asc, false, true)
-        .order_by("b", Sort::Desc, true, false)
+        .order_by("a", Sort::Asc.collate())
+        .order_by("b", Sort::Desc.numeric())
         .build();
     assert_eq!(
         sql,
         "SELECT id FROM t ORDER BY a COLLATE ASC, b NUMERIC DESC"
+    );
+}
+
+#[test]
+fn order_by_collate_and_numeric_chained_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("a", Sort::Asc.collate().numeric())
+        .order_by("b", Sort::Desc.numeric())
+        .build();
+    assert_eq!(
+        sql,
+        "SELECT id FROM t ORDER BY a COLLATE NUMERIC ASC, b NUMERIC DESC"
     );
 }
 
@@ -221,7 +234,7 @@ fn start_at_basic_builds() {
 fn start_at_with_limit_order_and_fetch_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("users")
-        .order_by("name", Sort::Asc, false, false)
+        .order_by("name", Sort::Asc)
         .limit(5)
         .start_at(10)
         .fetch(vec!["profile"])
@@ -325,7 +338,7 @@ fn select_subquery_with_where_and_outer_other_field_builds() {
 fn select_star_and_subquery_field_builds() {
     let sub = QueryBuilder::select(surrealex::fields!("recent"))
         .from("sessions")
-        .order_by("ts", Sort::Desc, false, false)
+        .order_by("ts", Sort::Desc)
         .limit(1);
 
     let sql = QueryBuilder::select(surrealex::fields!(*, sub))
