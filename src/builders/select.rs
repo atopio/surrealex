@@ -42,10 +42,8 @@ impl SelectBuilder {
         };
         let name = format!("{}{}{}{}.{fields}", dir1, params.from.1, dir2, params.to.1);
 
-        // In SurrealDB, aliases for graph traversals are very common
         let alias = params.alias;
 
-        // Push it into our unified items list
         self.data.fields.push(SelectField { name, alias });
 
         self

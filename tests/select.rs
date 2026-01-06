@@ -213,6 +213,26 @@ fn order_by_collate_and_numeric_chained_builds() {
 }
 
 #[test]
+fn order_by_then_order_random_overrides_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("name", Sort::Asc)
+        .order_random()
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY RAND()");
+}
+
+#[test]
+fn order_random_then_order_by_keeps_both_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_random()
+        .order_by("name", Sort::Asc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY RAND(), name ASC");
+}
+
+#[test]
 fn order_random_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("r")
