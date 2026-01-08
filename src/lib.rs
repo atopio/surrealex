@@ -10,9 +10,12 @@ pub mod traits;
 pub mod types;
 
 use crate::{
-    builders::select::SelectBuilder,
+    builders::{delete::DeleteBuilder, select::SelectBuilder},
     enums::SelectionFields,
-    types::select::{SelectData, SelectField},
+    types::{
+        delete::DeleteData,
+        select::{SelectData, SelectField},
+    },
 };
 
 #[derive(Debug)]
@@ -31,5 +34,13 @@ impl QueryBuilder {
             ..Default::default()
         };
         SelectBuilder { data }
+    }
+
+    pub fn delete(targets: &str) -> DeleteBuilder {
+        let data = DeleteData {
+            targets: targets.to_string(),
+            ..Default::default()
+        };
+        DeleteBuilder { data }
     }
 }
