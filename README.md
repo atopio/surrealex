@@ -37,7 +37,7 @@ use surrealex::QueryBuilder;
 let query = QueryBuilder::select(surrealex::fields!("id", "name"))
     .from("users")
     .r#where("age > 18")
-    .order_by("created_at", Sort::Desc, false, false)
+    .order_by("created_at", Sort::Desc)
     .limit(10)
     .build();
 
@@ -53,7 +53,8 @@ let query = QueryBuilder::select(surrealex::fields!("id"))
     .from("users")
     .r#where(
         Condition::new("age > 18")
-            .and(Condition::new("status = 'active'").or("status = 'pending'"))
+        .and(Condition::new("status = 'active'")
+        .or("status = 'pending'"))
     )
     .build();
 

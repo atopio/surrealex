@@ -125,6 +125,25 @@ fn complex_where_builds() {
 }
 
 #[test]
+fn very_complex_where_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .r#where(
+            Condition::new("a = 1").and(
+                Condition::new("b = 2").or(Condition::new("c = 3").and(
+                    Condition::new("d = 4")
+                        .or(Condition::new("e = 5").and(Condition::new("f = 6").or("g = 7"))),
+                )),
+            ),
+        )
+        .build();
+    assert_eq!(
+        sql,
+        "SELECT id FROM t WHERE (a = 1 AND (b = 2 OR (c = 3 AND (d = 4 OR (e = 5 AND (f = 6 OR g = 7))))))"
+    );
+}
+
+#[test]
 fn fetch_single_field_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("post")

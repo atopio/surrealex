@@ -30,7 +30,13 @@ impl Condition {
     }
 
     pub fn and(self, cond: impl Into<Condition>) -> Self {
-        Condition::And(vec![self, cond.into()])
+        match self {
+            Condition::And(mut conds) => {
+                conds.push(cond.into());
+                Condition::And(conds)
+            }
+            _ => Condition::And(vec![self, cond.into()]),
+        }
     }
 
     pub fn or(self, cond: impl Into<Condition>) -> Self {
