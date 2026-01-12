@@ -119,13 +119,7 @@ fn where_chaining_multiple_times_builds() {
 fn complex_where_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("t")
-        .r#where(Condition::And(vec![
-            Condition::Simple("a = 1".into()),
-            Condition::Or(vec![
-                Condition::Simple("b = 2".into()),
-                Condition::Simple("c = 3".into()),
-            ]),
-        ]))
+        .r#where(Condition::new("a = 1").and(Condition::new("b = 2").or("c = 3")))
         .build();
     assert_eq!(sql, "SELECT id FROM t WHERE (a = 1 AND (b = 2 OR c = 3))");
 }

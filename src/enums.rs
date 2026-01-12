@@ -24,6 +24,20 @@ pub enum Condition {
     Or(Vec<Condition>),
 }
 
+impl Condition {
+    pub fn new(s: impl Into<String>) -> Self {
+        Condition::Simple(s.into())
+    }
+
+    pub fn and(self, cond: impl Into<Condition>) -> Self {
+        Condition::And(vec![self, cond.into()])
+    }
+
+    pub fn or(self, cond: impl Into<Condition>) -> Self {
+        Condition::Or(vec![self, cond.into()])
+    }
+}
+
 impl Display for Condition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

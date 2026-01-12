@@ -51,13 +51,10 @@ use surrealex::enums::Condition;
 
 let query = QueryBuilder::select(surrealex::fields!("id"))
     .from("users")
-    .r#where(Condition::And(vec![
-        Condition::Simple("age > 18".into()),
-        Condition::Or(vec![
-            Condition::Simple("status = 'active'".into()),
-            Condition::Simple("status = 'pending'".into()),
-        ]),
-    ]))
+    .r#where(
+        Condition::new("age > 18")
+            .and(Condition::new("status = 'active'").or("status = 'pending'"))
+    )
     .build();
 
 assert_eq!(
