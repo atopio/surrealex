@@ -14,6 +14,15 @@ pub enum Direction {
     In,
 }
 
+impl Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Direction::Out => write!(f, "->"),
+            Direction::In => write!(f, "<-"),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Condition {
     /// A simple, raw condition string (e.g., "price > 50").

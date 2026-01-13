@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::{
-    enums::{Condition, Direction, SelectionFields},
+    enums::{Condition, SelectionFields},
     internal_macros::push_clause,
     traits::ToSelectField,
     types::select::{GraphExpandParams, OrderOptions, OrderTerm, SelectData, SelectField},
@@ -13,21 +13,16 @@ pub struct SelectBuilder {
 
 impl SelectBuilder {
     pub fn graph_traverse(mut self, params: GraphExpandParams) -> Self {
-        let dir1 = match params.from.0 {
-            Direction::Out => "->",
-            Direction::In => "<-",
-        };
-        let dir2 = match params.to.0 {
-            Direction::Out => "->",
-            Direction::In => "<-",
-        };
+        let path = params
+            .steps
+            .iter()
+            .map(|step| step.to_string())
+            .collect::<String>();
 
-        // Building: ->table1->table2.*
         let fields = match params.fields {
             SelectionFields::All => "*".to_string(),
-            SelectionFields::Fields(select_fields) => format!(
-                "{{{}}}",
-                select_fields
+            SelectionFields::Fields(select_fields) => {
+                let joined = select_fields
                     .iter()
                     .map(|f| {
                         if let Some(alias) = &f.alias {
@@ -36,12 +31,13 @@ impl SelectBuilder {
                             f.name.clone()
                         }
                     })
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ),
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{{{}}}", joined)
+            }
         };
-        let name = format!("{}{}{}{}.{fields}", dir1, params.from.1, dir2, params.to.1);
 
+        let name = format!("{}.{}", path, fields);
         let alias = params.alias;
 
         self.data.fields.push(SelectField { name, alias });

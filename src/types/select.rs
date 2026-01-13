@@ -45,13 +45,76 @@ impl Display for OrderTerm {
 /// Parameters for a two-step graph traversal expansion.
 #[derive(Debug, Clone)]
 pub struct GraphExpandParams {
-    /// First traversal (direction and graph table).
-    pub from: (Direction, String),
-    /// Second traversal (direction and edge table).
-    pub to: (Direction, String),
+    /// Steps defining the traversal.
+    pub steps: Vec<GraphStep>,
     /// Optional alias for the expansion.
     pub alias: Option<String>,
     pub fields: SelectionFields,
+}
+
+impl GraphExpandParams {
+    pub fn start(direction: Direction, table: impl Into<String>) -> Self {
+        Self {
+            steps: vec![GraphStep {
+                direction,
+                table: table.into(),
+            }],
+            alias: None,
+            fields: SelectionFields::All,
+        }
+    }
+
+    #[inline]
+    pub fn start_in(table: impl Into<String>) -> Self {
+        Self::start(Direction::In, table)
+    }
+
+    #[inline]
+    pub fn start_out(table: impl Into<String>) -> Self {
+        Self::start(Direction::Out, table)
+    }
+
+    pub fn step(mut self, dir: Direction, table: impl Into<String>) -> Self {
+        self.steps.push(GraphStep {
+            direction: dir,
+            table: table.into(),
+        });
+        self
+    }
+
+    #[inline]
+    pub fn step_in(self, table: impl Into<String>) -> Self {
+        self.step(Direction::In, table)
+    }
+
+    #[inline]
+    pub fn step_out(self, table: impl Into<String>) -> Self {
+        self.step(Direction::Out, table)
+    }
+
+    pub fn fields(mut self, fields: SelectionFields) -> Self {
+        self.fields = fields;
+        self
+    }
+
+    pub fn alias(mut self, alias: impl Into<String>) -> Self {
+        self.alias = Some(alias.into());
+        self
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GraphStep {
+    pub direction: Direction,
+    pub table: String,
+}
+
+impl Display for GraphStep {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // This leverages the Display impl of Direction
+        // to write the arrow followed by the table name.
+        write!(f, "{}{}", self.direction, self.table)
+    }
 }
 
 #[derive(Debug, Clone, Default)]

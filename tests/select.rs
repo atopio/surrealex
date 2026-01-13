@@ -64,12 +64,12 @@ fn select_from_only_then_limit_builds() {
 #[test]
 fn graph_traverse_with_alias_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::Out, "friends".into()),
-            to: (Direction::In, "posts".into()),
-            alias: Some("friend_posts".into()),
-            fields: surrealex::fields!(*),
-        })
+        .graph_traverse(
+            GraphExpandParams::start_out("friends")
+                .step_in("posts")
+                .fields(surrealex::fields!(*))
+                .alias("friend_posts"),
+        )
         .from("user")
         .build();
 
@@ -83,12 +83,11 @@ fn graph_traverse_with_alias_builds() {
 #[test]
 fn graph_traverse_without_alias_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("name"))
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::In, "t".into()),
-            to: (Direction::Out, "e".into()),
-            alias: None,
-            fields: surrealex::fields!(*),
-        })
+        .graph_traverse(
+            GraphExpandParams::start_in("t")
+                .step_out("e")
+                .fields(surrealex::fields!(*)),
+        )
         .from("x")
         .build();
 
@@ -164,12 +163,12 @@ fn fetch_multiple_fields_builds() {
 #[test]
 fn fetch_with_graph_and_where_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::Out, "friends".into()),
-            to: (Direction::In, "posts".into()),
-            alias: Some("friend_posts".into()),
-            fields: surrealex::fields!(*),
-        })
+        .graph_traverse(
+            GraphExpandParams::start_out("friends")
+                .step_in("posts")
+                .fields(surrealex::fields!(*))
+                .alias("friend_posts"),
+        )
         .from("user")
         .r#where("active = true")
         .fetch(vec!["friend_posts"]) // fetch the aliased expansion
@@ -281,18 +280,18 @@ fn start_at_with_limit_order_and_fetch_builds() {
 #[test]
 fn multi_graph_traverse_mixed_fields_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::Out, "friends".into()),
-            to: (Direction::In, "posts".into()),
-            alias: Some("fp".into()),
-            fields: surrealex::fields!(*),
-        })
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::Out, "related".into()),
-            to: (Direction::In, "items".into()),
-            alias: Some("related_items".into()),
-            fields: surrealex::fields!(("title", "t"), "count", ("meta", "m")),
-        })
+        .graph_traverse(
+            GraphExpandParams::start_out("friends")
+                .step(Direction::In, "posts")
+                .fields(surrealex::fields!(*))
+                .alias("fp"),
+        )
+        .graph_traverse(
+            GraphExpandParams::start_out("related")
+                .step_in("items")
+                .fields(surrealex::fields!(("title", "t"), "count", ("meta", "m")))
+                .alias("related_items"),
+        )
         .from("user")
         .build();
 
@@ -305,18 +304,18 @@ fn multi_graph_traverse_mixed_fields_builds() {
 #[test]
 fn multi_graph_traverse_nested_and_aliases_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::Out, "a".into()),
-            to: (Direction::Out, "b".into()),
-            alias: Some("ab".into()),
-            fields: surrealex::fields!(("x", "x_alias"), ("y", "y_alias")),
-        })
-        .graph_traverse(GraphExpandParams {
-            from: (Direction::In, "c".into()),
-            to: (Direction::Out, "d".into()),
-            alias: Some("cd".into()),
-            fields: surrealex::fields!(*),
-        })
+        .graph_traverse(
+            GraphExpandParams::start_out("a")
+                .step_out("b")
+                .fields(surrealex::fields!(("x", "x_alias"), ("y", "y_alias")))
+                .alias("ab"),
+        )
+        .graph_traverse(
+            GraphExpandParams::start_in("c")
+                .step_out("d")
+                .fields(surrealex::fields!(*))
+                .alias("cd"),
+        )
         .from("root")
         .build();
 
