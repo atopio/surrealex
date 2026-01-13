@@ -44,7 +44,7 @@ impl Display for OrderTerm {
 
 /// Parameters for a two-step graph traversal expansion.
 #[derive(Debug, Clone)]
-pub struct GraphExpandParams {
+pub struct GraphTraversalParams {
     /// Steps defining the traversal.
     pub steps: Vec<GraphStep>,
     /// Optional alias for the expansion.
@@ -52,7 +52,7 @@ pub struct GraphExpandParams {
     pub fields: SelectionFields,
 }
 
-impl GraphExpandParams {
+impl GraphTraversalParams {
     pub fn start(direction: Direction, table: impl Into<String>) -> Self {
         Self {
             steps: vec![GraphStep {

@@ -53,8 +53,7 @@ let query = QueryBuilder::select(surrealex::fields!("id"))
     .from("users")
     .r#where(
         Condition::new("age > 18")
-        .and(Condition::new("status = 'active'")
-        .or("status = 'pending'"))
+        .and(Condition::new("status = 'active'").or("status = 'pending'"))
     )
     .build();
 
@@ -67,15 +66,15 @@ assert_eq!(
 ### Graph Traversal
 
 ```rust
-use surrealex::{enums::Direction, structs::GraphExpandParams};
+use surrealex::types::select::GraphTraversalParams;
 
 let query = QueryBuilder::select(surrealex::fields!(*))
-    .graph_traverse(GraphExpandParams {
-        from: (Direction::Out, "friends".into()),
-        to: (Direction::In, "posts".into()),
-        alias: Some("friend_posts".into()),
-        fields: surrealex::fields!(*),
-    })
+    .graph_traverse(
+        GraphTraversalParams::start_out("friends")
+            .step_in("posts")
+            .fields(surrealex::fields!(*))
+            .alias("friend_posts"),
+    )
     .from("user")
     .build();
 

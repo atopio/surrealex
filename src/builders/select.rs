@@ -4,7 +4,7 @@ use crate::{
     enums::{Condition, SelectionFields},
     internal_macros::push_clause,
     traits::ToSelectField,
-    types::select::{GraphExpandParams, OrderOptions, OrderTerm, SelectData, SelectField},
+    types::select::{GraphTraversalParams, OrderOptions, OrderTerm, SelectData, SelectField},
 };
 
 pub struct SelectBuilder {
@@ -12,7 +12,7 @@ pub struct SelectBuilder {
 }
 
 impl SelectBuilder {
-    pub fn graph_traverse(mut self, params: GraphExpandParams) -> Self {
+    pub fn graph_traverse(mut self, params: GraphTraversalParams) -> Self {
         let path = params
             .steps
             .iter()

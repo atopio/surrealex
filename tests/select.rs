@@ -1,6 +1,6 @@
 use surrealex::QueryBuilder;
 use surrealex::enums::{Condition, Direction, Sort};
-use surrealex::types::select::GraphExpandParams;
+use surrealex::types::select::GraphTraversalParams;
 
 #[test]
 fn select_single_field_from_builds() {
@@ -65,7 +65,7 @@ fn select_from_only_then_limit_builds() {
 fn graph_traverse_with_alias_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
         .graph_traverse(
-            GraphExpandParams::start_out("friends")
+            GraphTraversalParams::start_out("friends")
                 .step_in("posts")
                 .fields(surrealex::fields!(*))
                 .alias("friend_posts"),
@@ -84,7 +84,7 @@ fn graph_traverse_with_alias_builds() {
 fn graph_traverse_without_alias_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("name"))
         .graph_traverse(
-            GraphExpandParams::start_in("t")
+            GraphTraversalParams::start_in("t")
                 .step_out("e")
                 .fields(surrealex::fields!(*)),
         )
@@ -164,7 +164,7 @@ fn fetch_multiple_fields_builds() {
 fn fetch_with_graph_and_where_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
         .graph_traverse(
-            GraphExpandParams::start_out("friends")
+            GraphTraversalParams::start_out("friends")
                 .step_in("posts")
                 .fields(surrealex::fields!(*))
                 .alias("friend_posts"),
@@ -281,13 +281,13 @@ fn start_at_with_limit_order_and_fetch_builds() {
 fn multi_graph_traverse_mixed_fields_builds() {
     let sql = QueryBuilder::select(surrealex::fields!(*))
         .graph_traverse(
-            GraphExpandParams::start_out("friends")
+            GraphTraversalParams::start_out("friends")
                 .step(Direction::In, "posts")
                 .fields(surrealex::fields!(*))
                 .alias("fp"),
         )
         .graph_traverse(
-            GraphExpandParams::start_out("related")
+            GraphTraversalParams::start_out("related")
                 .step_in("items")
                 .fields(surrealex::fields!(("title", "t"), "count", ("meta", "m")))
                 .alias("related_items"),
@@ -305,13 +305,13 @@ fn multi_graph_traverse_mixed_fields_builds() {
 fn multi_graph_traverse_nested_and_aliases_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .graph_traverse(
-            GraphExpandParams::start_out("a")
+            GraphTraversalParams::start_out("a")
                 .step_out("b")
                 .fields(surrealex::fields!(("x", "x_alias"), ("y", "y_alias")))
                 .alias("ab"),
         )
         .graph_traverse(
-            GraphExpandParams::start_in("c")
+            GraphTraversalParams::start_in("c")
                 .step_out("d")
                 .fields(surrealex::fields!(*))
                 .alias("cd"),
