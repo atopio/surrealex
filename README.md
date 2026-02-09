@@ -10,6 +10,7 @@ A Rust library for building SurrealQL queries with a fluent, type-safe API.
 - Type-safe field selection using the `fields!` macro
 - Complex WHERE conditions and graph traversal support
 - Support for `SELECT`, `FROM`, `WHERE`, `FETCH`, `ORDER BY`, `LIMIT`, and `START AT`
+- Full `DELETE` statement support with `ONLY`, `RETURN`, `TIMEOUT`, and `EXPLAIN` clauses
 
 ## 📦 Installation
 
@@ -81,6 +82,73 @@ let query = QueryBuilder::select(surrealex::fields!(*))
 assert_eq!(
     query,
     "SELECT *, ->friends<-posts.* AS friend_posts FROM user"
+);
+```
+
+### Delete Statement
+
+```rust
+use surrealex::QueryBuilder;
+
+// Basic delete
+let query = QueryBuilder::delete("users")
+    .r#where("active = false")
+    .build();
+
+assert_eq!(query, "DELETE FROM users WHERE active = false");
+```
+
+#### DELETE ONLY with RETURN
+
+When using `ONLY`, SurrealDB expects a single-result `RETURN` clause. The builder generates the query and leaves validation to the server.
+
+```rust
+use surrealex::QueryBuilder;
+
+let query = QueryBuilder::delete("person:one")
+    .only()
+    .return_before()
+    .build();
+
+assert_eq!(query, "DELETE ONLY person:one RETURN BEFORE");
+```
+
+#### RETURN Variants
+
+```rust
+use surrealex::QueryBuilder;
+
+// RETURN NONE / BEFORE / AFTER / DIFF
+let query = QueryBuilder::delete("users")
+    .r#where("expired = true")
+    .return_diff()
+    .build();
+
+assert_eq!(query, "DELETE FROM users WHERE expired = true RETURN DIFF");
+
+// RETURN specific fields
+let query = QueryBuilder::delete("users")
+    .return_params(vec!["$before", "$after"])
+    .build();
+
+assert_eq!(query, "DELETE FROM users RETURN $before, $after");
+```
+
+#### TIMEOUT and EXPLAIN
+
+```rust
+use surrealex::QueryBuilder;
+
+let query = QueryBuilder::delete("logs")
+    .r#where("created_at < '2024-01-01'")
+    .return_none()
+    .timeout("5s")
+    .explain_full()
+    .build();
+
+assert_eq!(
+    query,
+    "DELETE FROM logs WHERE created_at < '2024-01-01' RETURN NONE TIMEOUT 5s EXPLAIN FULL"
 );
 ```
 
