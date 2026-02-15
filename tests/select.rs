@@ -382,3 +382,39 @@ fn select_star_and_subquery_field_builds() {
         "SELECT *, (SELECT recent FROM sessions ORDER BY ts DESC LIMIT 1) FROM users"
     );
 }
+
+#[test]
+fn explain_simple_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .explain()
+        .build();
+    assert_eq!(sql, "SELECT id FROM users EXPLAIN");
+}
+
+#[test]
+fn explain_full_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .explain_full()
+        .build();
+    assert_eq!(sql, "SELECT id FROM users EXPLAIN FULL");
+}
+
+#[test]
+fn where_order_limit_fetch_with_explain_full_builds() {
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .r#where("active = true")
+        .order_by("name", Sort::Asc)
+        .limit(10)
+        .start_at(5)
+        .fetch(vec!["profile"])
+        .explain_full()
+        .build();
+
+    assert_eq!(
+        sql,
+        "SELECT id FROM users WHERE active = true ORDER BY name ASC LIMIT 10 START AT 5 FETCH profile EXPLAIN FULL"
+    );
+}

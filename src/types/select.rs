@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::enums::{Condition, Direction, SelectionFields, Sort};
+use crate::enums::{Condition, Direction, ExplainClause, SelectionFields, Sort};
 
 #[derive(Default, Debug, Clone)]
 pub struct SelectData {
@@ -12,6 +12,8 @@ pub struct SelectData {
     pub fetch_fields: Vec<String>,
     pub order_by: Vec<String>,
     pub start_at: Option<u64>,
+    /// Optional EXPLAIN mode (`EXPLAIN` or `EXPLAIN FULL`).
+    pub explain: Option<ExplainClause>,
 }
 
 #[derive(Debug, Clone, Default)]
