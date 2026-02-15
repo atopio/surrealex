@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::{
-    enums::{Condition, SelectionFields},
+    enums::{Condition, ExplainClause, SelectionFields},
     internal_macros::push_clause,
     traits::ToSelectField,
     types::select::{GraphTraversalParams, OrderOptions, OrderTerm, SelectData, SelectField},
@@ -118,6 +118,16 @@ impl FromReady {
         self.data
             .fetch_fields
             .extend(fields.iter().map(|s| s.to_string()));
+        self
+    }
+
+    pub fn explain(mut self) -> Self {
+        self.data.explain = Some(ExplainClause::Simple);
+        self
+    }
+
+    pub fn explain_full(mut self) -> Self {
+        self.data.explain = Some(ExplainClause::Full);
         self
     }
 
