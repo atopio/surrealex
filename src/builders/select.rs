@@ -176,6 +176,10 @@ impl FromReady {
             push_clause!(query, "FETCH {fetch_fields}");
         }
 
+        if let Some(explain) = self.data.explain {
+            push_clause!(query, "{explain}");
+        }
+
         query
     }
 }

@@ -5,14 +5,14 @@ pub mod macros;
 
 pub mod builders;
 pub(crate) mod internal_macros;
-pub mod structs;
 pub mod traits;
 pub mod types;
 
 use crate::{
-    builders::{delete::DeleteBuilder, select::SelectBuilder},
+    builders::{create::CreateBuilder, delete::DeleteBuilder, select::SelectBuilder},
     enums::SelectionFields,
     types::{
+        create::CreateData,
         delete::DeleteData,
         select::{SelectData, SelectField},
     },
@@ -42,5 +42,13 @@ impl QueryBuilder {
             ..Default::default()
         };
         DeleteBuilder { data }
+    }
+
+    pub fn create(targets: &str) -> CreateBuilder {
+        let data = CreateData {
+            targets: targets.to_string(),
+            ..Default::default()
+        };
+        CreateBuilder { data }
     }
 }
