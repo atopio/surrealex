@@ -3,6 +3,7 @@ use std::fmt::Write;
 use crate::{
     enums::{Condition, SelectionFields},
     internal_macros::push_clause,
+    render::SurrealVersion,
     traits::ToSelectField,
     types::select::{GraphTraversalParams, OrderOptions, OrderTerm, SelectData, SelectField},
 };
@@ -19,28 +20,50 @@ impl SelectBuilder {
             .map(|step| step.to_string())
             .collect::<String>();
 
-        let fields = match params.fields {
-            SelectionFields::All => "*".to_string(),
-            SelectionFields::Fields(select_fields) => {
-                let joined = select_fields
-                    .iter()
-                    .map(|f| {
-                        if let Some(alias) = &f.alias {
-                            format!("{} AS {}", f.name, alias)
-                        } else {
-                            f.name.clone()
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                format!("{{{}}}", joined)
+        match self.data.version {
+            SurrealVersion::V1 => match params.fields {
+                SelectionFields::All => {
+                    let name = format!("{}.*", path);
+                    self.data.fields.push(SelectField {
+                        name,
+                        alias: params.alias,
+                    });
+                }
+                SelectionFields::Fields(select_fields) => {
+                    for field in select_fields {
+                        let name = format!("{}.{}", path, field.name);
+                        self.data.fields.push(SelectField {
+                            name,
+                            alias: field.alias,
+                        });
+                    }
+                }
+            },
+            SurrealVersion::V2 => {
+                let fields = match params.fields {
+                    SelectionFields::All => "*".to_string(),
+                    SelectionFields::Fields(select_fields) => {
+                        let joined = select_fields
+                            .iter()
+                            .map(|f| {
+                                if let Some(alias) = &f.alias {
+                                    format!("{} AS {}", f.name, alias)
+                                } else {
+                                    f.name.clone()
+                                }
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        format!("{{{}}}", joined)
+                    }
+                };
+
+                let name = format!("{}.{}", path, fields);
+                let alias = params.alias;
+
+                self.data.fields.push(SelectField { name, alias });
             }
-        };
-
-        let name = format!("{}.{}", path, fields);
-        let alias = params.alias;
-
-        self.data.fields.push(SelectField { name, alias });
+        }
 
         self
     }
