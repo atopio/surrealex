@@ -1,6 +1,6 @@
-use surrealex::QueryBuilder;
 use surrealex::enums::{Condition, Direction, Sort};
 use surrealex::types::select::GraphTraversalParams;
+use surrealex::{QueryBuilder, SurrealV1};
 
 #[test]
 fn select_single_field_from_builds() {
@@ -323,6 +323,132 @@ fn multi_graph_traverse_nested_and_aliases_builds() {
         sql,
         "SELECT id, ->a->b.{x AS x_alias, y AS y_alias} AS ab, <-c->d.* AS cd FROM root"
     );
+}
+
+#[test]
+fn v1_graph_traverse_star_with_alias_builds() {
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!(*))
+        .graph_traverse(
+            GraphTraversalParams::start_out("friends")
+                .step_in("posts")
+                .fields(surrealex::fields!(*))
+                .alias("friend_posts"),
+        )
+        .from("user")
+        .build();
+
+    // SelectionFields::All is rendered the same in V1 and V2
+    assert_eq!(
+        sql,
+        "SELECT *, ->friends<-posts.* AS friend_posts FROM user"
+    );
+}
+
+#[test]
+fn v1_graph_traverse_star_without_alias_builds() {
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!("name"))
+        .graph_traverse(
+            GraphTraversalParams::start_in("t")
+                .step_out("e")
+                .fields(surrealex::fields!(*)),
+        )
+        .from("x")
+        .build();
+
+    assert_eq!(sql, "SELECT name, <-t->e.* FROM x");
+}
+
+#[test]
+fn v1_graph_traverse_fields_expand_separately_builds() {
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!(*))
+        .graph_traverse(
+            GraphTraversalParams::start_out("wrote")
+                .step_out("book")
+                .fields(surrealex::fields!("name", "id")),
+        )
+        .from("users")
+        .build();
+
+    // V1: each field gets its own path prefix instead of {name, id}
+    assert_eq!(
+        sql,
+        "SELECT *, ->wrote->book.name, ->wrote->book.id FROM users"
+    );
+}
+
+#[test]
+fn v1_graph_traverse_fields_with_inner_aliases_builds() {
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!("id"))
+        .graph_traverse(
+            GraphTraversalParams::start_out("a")
+                .step_out("b")
+                .fields(surrealex::fields!(("x", "x_alias"), ("y", "y_alias"))),
+        )
+        .from("root")
+        .build();
+
+    // V1: inner aliases are preserved on each expanded field
+    assert_eq!(
+        sql,
+        "SELECT id, ->a->b.x AS x_alias, ->a->b.y AS y_alias FROM root"
+    );
+}
+
+#[test]
+fn v1_multi_graph_traverse_mixed_fields_builds() {
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!(*))
+        .graph_traverse(
+            GraphTraversalParams::start_out("friends")
+                .step(Direction::In, "posts")
+                .fields(surrealex::fields!(*))
+                .alias("fp"),
+        )
+        .graph_traverse(
+            GraphTraversalParams::start_out("related")
+                .step_in("items")
+                .fields(surrealex::fields!(("title", "t"), "count", ("meta", "m"))),
+        )
+        .from("user")
+        .build();
+
+    // First traversal uses All so it's the same; second expands fields separately
+    assert_eq!(
+        sql,
+        "SELECT *, ->friends<-posts.* AS fp, ->related<-items.title AS t, ->related<-items.count, ->related<-items.meta AS m FROM user"
+    );
+}
+
+#[test]
+fn v1_graph_traverse_single_field_builds() {
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!(*))
+        .graph_traverse(
+            GraphTraversalParams::start_out("likes")
+                .step_out("cat")
+                .fields(surrealex::fields!("name")),
+        )
+        .from("users")
+        .build();
+
+    assert_eq!(sql, "SELECT *, ->likes->cat.name FROM users");
+}
+
+#[test]
+fn v1_default_select_unchanged() {
+    // Non-graph queries are identical across versions
+    let sql = QueryBuilder::with_version(SurrealV1)
+        .select(surrealex::fields!("id", "name"))
+        .from("users")
+        .r#where("age > 18")
+        .limit(10)
+        .build();
+
+    assert_eq!(sql, "SELECT id, name FROM users WHERE age > 18 LIMIT 10");
 }
 
 #[test]

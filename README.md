@@ -85,6 +85,56 @@ assert_eq!(
 );
 ```
 
+### Versioning API (`with_version`)
+
+`QueryBuilder::select(...)` uses `SurrealV2` by default.  
+You can target a specific SurrealDB version with `QueryBuilder::with_version(...)`.
+
+```rust
+use surrealex::{QueryBuilder, SurrealV1};
+use surrealex::enums::SelectionFields;
+
+let query = QueryBuilder::with_version(SurrealV1)
+    .select(SelectionFields::All)
+    .graph_traverse(
+        surrealex::types::select::GraphTraversalParams::start_out("friends")
+            .step_in("posts")
+            .fields(surrealex::fields!("title", "created_at"))
+            .alias("friend_posts"),
+    )
+    .from("user")
+    .build();
+
+assert_eq!(
+    query,
+    "SELECT *, ->friends<-posts.title, ->friends<-posts.created_at AS friend_posts FROM user"
+);
+```
+
+`SurrealV2` and `SurrealV3` use object destructuring for graph traversal field selection:
+
+```rust
+use surrealex::{QueryBuilder, SurrealV3};
+use surrealex::enums::SelectionFields;
+use surrealex::types::select::GraphTraversalParams;
+
+let query = QueryBuilder::with_version(SurrealV3)
+    .select(SelectionFields::All)
+    .graph_traverse(
+        GraphTraversalParams::start_out("friends")
+            .step_in("posts")
+            .fields(surrealex::fields!("title", "created_at"))
+            .alias("friend_posts"),
+    )
+    .from("user")
+    .build();
+
+assert_eq!(
+    query,
+    "SELECT *, ->friends<-posts.{title, created_at} AS friend_posts FROM user"
+);
+```
+
 ### Delete Statement
 
 ```rust

@@ -1,47 +1,21 @@
 use std::fmt::Write;
 
 use crate::{
-    enums::{Condition, ExplainClause, SelectionFields},
+    enums::{Condition, ExplainClause},
     internal_macros::push_clause,
     traits::ToSelectField,
     types::select::{GraphTraversalParams, OrderOptions, OrderTerm, SelectData, SelectField},
+    versioning::select::VersionedSelect,
 };
 
-pub struct SelectBuilder {
+pub struct SelectBuilder<V> {
     pub data: SelectData,
+    pub(crate) renderer: V,
 }
 
-impl SelectBuilder {
+impl<V: VersionedSelect> SelectBuilder<V> {
     pub fn graph_traverse(mut self, params: GraphTraversalParams) -> Self {
-        let path = params
-            .steps
-            .iter()
-            .map(|step| step.to_string())
-            .collect::<String>();
-
-        let fields = match params.fields {
-            SelectionFields::All => "*".to_string(),
-            SelectionFields::Fields(select_fields) => {
-                let joined = select_fields
-                    .iter()
-                    .map(|f| {
-                        if let Some(alias) = &f.alias {
-                            format!("{} AS {}", f.name, alias)
-                        } else {
-                            f.name.clone()
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                format!("{{{}}}", joined)
-            }
-        };
-
-        let name = format!("{}.{}", path, fields);
-        let alias = params.alias;
-
-        self.data.fields.push(SelectField { name, alias });
-
+        self.renderer.graph_traverse(&mut self.data, params);
         self
     }
 
