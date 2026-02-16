@@ -51,6 +51,14 @@ impl QueryBuilder {
         DeleteBuilder { data }
     }
 
+    pub fn create(targets: &str) -> CreateBuilder {
+        let data = CreateData {
+            targets: targets.to_string(),
+            ..Default::default()
+        };
+        CreateBuilder { data }
+    }
+
     /// Create a version-aware query builder.
     ///
     /// Use this to target a specific SurrealDB version for query rendering.
@@ -105,5 +113,13 @@ impl<V> VersionedQueryBuilder<V> {
             ..Default::default()
         };
         DeleteBuilder { data }
+    }
+
+    pub fn create(self, targets: &str) -> CreateBuilder {
+        let data = CreateData {
+            targets: targets.to_string(),
+            ..Default::default()
+        };
+        CreateBuilder { data }
     }
 }

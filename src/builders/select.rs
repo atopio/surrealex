@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::{
-    enums::{Condition, ExplainClause, SelectionFields},
+    enums::{Condition, ExplainClause},
     internal_macros::push_clause,
     traits::ToSelectField,
     types::select::{GraphTraversalParams, OrderOptions, OrderTerm, SelectData, SelectField},
