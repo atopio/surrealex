@@ -5,12 +5,12 @@ pub mod macros;
 
 pub mod builders;
 pub(crate) mod internal_macros;
-pub mod render;
 pub mod structs;
 pub mod traits;
 pub mod types;
+pub mod versioning;
 
-pub use crate::render::SurrealVersion;
+pub use crate::versioning::{SurrealV1, SurrealV2};
 
 use crate::{
     builders::{delete::DeleteBuilder, select::SelectBuilder},
@@ -19,13 +19,14 @@ use crate::{
         delete::DeleteData,
         select::{SelectData, SelectField},
     },
+    versioning::select::VersionedSelect,
 };
 
 #[derive(Debug)]
 pub struct QueryBuilder;
 
 impl QueryBuilder {
-    pub fn select(fields: SelectionFields) -> SelectBuilder {
+    pub fn select(fields: SelectionFields) -> SelectBuilder<SurrealV2> {
         let data = SelectData {
             fields: match fields {
                 SelectionFields::All => vec![SelectField {
@@ -36,7 +37,10 @@ impl QueryBuilder {
             },
             ..Default::default()
         };
-        SelectBuilder { data }
+        SelectBuilder {
+            data,
+            renderer: SurrealV2,
+        }
     }
 
     pub fn delete(targets: &str) -> DeleteBuilder {
@@ -50,29 +54,33 @@ impl QueryBuilder {
     /// Create a version-aware query builder.
     ///
     /// Use this to target a specific SurrealDB version for query rendering.
+    /// The version is expressed as a zero-sized type (`SurrealV1` or `SurrealV2`),
+    /// enabling fully monomorphized, zero-cost dispatch at compile time.
     ///
     /// ```rust
-    /// use surrealex::{QueryBuilder, SurrealVersion};
-    /// let q = QueryBuilder::with_version(SurrealVersion::V1)
+    /// use surrealex::{QueryBuilder, SurrealV1};
+    /// let q = QueryBuilder::with_version(SurrealV1)
     ///     .select(surrealex::enums::SelectionFields::All)
     ///     .from("users")
     ///     .build();
     /// ```
-    pub fn with_version(version: SurrealVersion) -> VersionedQueryBuilder {
-        VersionedQueryBuilder { version }
+    pub fn with_version<V>(renderer: V) -> VersionedQueryBuilder<V> {
+        VersionedQueryBuilder { renderer }
     }
 }
 
-/// A query builder that targets a specific [`SurrealVersion`].
+/// A query builder that targets a specific SurrealDB version.
 ///
-/// Created via [`QueryBuilder::with_version`].
+/// Created via [`QueryBuilder::with_version`]. The version type `V` is a
+/// zero-sized struct (e.g. [`SurrealV1`] or [`SurrealV2`]), so this builder
+/// carries no runtime overhead.
 #[derive(Debug, Clone, Copy)]
-pub struct VersionedQueryBuilder {
-    version: SurrealVersion,
+pub struct VersionedQueryBuilder<V> {
+    renderer: V,
 }
 
-impl VersionedQueryBuilder {
-    pub fn select(self, fields: SelectionFields) -> SelectBuilder {
+impl<V: VersionedSelect> VersionedQueryBuilder<V> {
+    pub fn select(self, fields: SelectionFields) -> SelectBuilder<V> {
         let data = SelectData {
             fields: match fields {
                 SelectionFields::All => vec![SelectField {
@@ -81,12 +89,16 @@ impl VersionedQueryBuilder {
                 }],
                 SelectionFields::Fields(select_fields) => select_fields,
             },
-            version: self.version,
             ..Default::default()
         };
-        SelectBuilder { data }
+        SelectBuilder {
+            data,
+            renderer: self.renderer,
+        }
     }
+}
 
+impl<V> VersionedQueryBuilder<V> {
     pub fn delete(self, targets: &str) -> DeleteBuilder {
         let data = DeleteData {
             targets: targets.to_string(),

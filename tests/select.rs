@@ -1,6 +1,6 @@
 use surrealex::enums::{Condition, Direction, Sort};
 use surrealex::types::select::GraphTraversalParams;
-use surrealex::{QueryBuilder, SurrealVersion};
+use surrealex::{QueryBuilder, SurrealV1};
 
 #[test]
 fn select_single_field_from_builds() {
@@ -325,11 +325,9 @@ fn multi_graph_traverse_nested_and_aliases_builds() {
     );
 }
 
-// ─── V1 graph traversal tests ───────────────────────────────────────────────
-
 #[test]
 fn v1_graph_traverse_star_with_alias_builds() {
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!(*))
         .graph_traverse(
             GraphTraversalParams::start_out("friends")
@@ -349,7 +347,7 @@ fn v1_graph_traverse_star_with_alias_builds() {
 
 #[test]
 fn v1_graph_traverse_star_without_alias_builds() {
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!("name"))
         .graph_traverse(
             GraphTraversalParams::start_in("t")
@@ -364,7 +362,7 @@ fn v1_graph_traverse_star_without_alias_builds() {
 
 #[test]
 fn v1_graph_traverse_fields_expand_separately_builds() {
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!(*))
         .graph_traverse(
             GraphTraversalParams::start_out("wrote")
@@ -383,7 +381,7 @@ fn v1_graph_traverse_fields_expand_separately_builds() {
 
 #[test]
 fn v1_graph_traverse_fields_with_inner_aliases_builds() {
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!("id"))
         .graph_traverse(
             GraphTraversalParams::start_out("a")
@@ -402,7 +400,7 @@ fn v1_graph_traverse_fields_with_inner_aliases_builds() {
 
 #[test]
 fn v1_multi_graph_traverse_mixed_fields_builds() {
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!(*))
         .graph_traverse(
             GraphTraversalParams::start_out("friends")
@@ -427,7 +425,7 @@ fn v1_multi_graph_traverse_mixed_fields_builds() {
 
 #[test]
 fn v1_graph_traverse_single_field_builds() {
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!(*))
         .graph_traverse(
             GraphTraversalParams::start_out("likes")
@@ -443,7 +441,7 @@ fn v1_graph_traverse_single_field_builds() {
 #[test]
 fn v1_default_select_unchanged() {
     // Non-graph queries are identical across versions
-    let sql = QueryBuilder::with_version(SurrealVersion::V1)
+    let sql = QueryBuilder::with_version(SurrealV1)
         .select(surrealex::fields!("id", "name"))
         .from("users")
         .r#where("age > 18")

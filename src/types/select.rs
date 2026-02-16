@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use crate::enums::{Condition, Direction, SelectionFields, Sort};
-use crate::render::SurrealVersion;
 
 #[derive(Default, Debug, Clone)]
 pub struct SelectData {
@@ -13,7 +12,6 @@ pub struct SelectData {
     pub fetch_fields: Vec<String>,
     pub order_by: Vec<String>,
     pub start_at: Option<u64>,
-    pub version: SurrealVersion,
 }
 
 #[derive(Debug, Clone, Default)]
