@@ -1,7 +1,7 @@
 use crate::{
-    enums::Condition,
+    enums::{Condition, ExplainClause, ReturnClause},
     internal_macros::push_clause,
-    types::delete::{DeleteData, ExplainMode, ReturnClause},
+    types::delete::DeleteData,
 };
 use std::fmt::Write;
 
@@ -76,13 +76,13 @@ impl DeleteBuilder {
 
     /// Adds an `EXPLAIN` clause to the statement.
     pub fn explain(mut self) -> Self {
-        self.data.explain = Some(ExplainMode::Simple);
+        self.data.explain = Some(ExplainClause::Simple);
         self
     }
 
     /// Adds an `EXPLAIN FULL` clause to the statement.
     pub fn explain_full(mut self) -> Self {
-        self.data.explain = Some(ExplainMode::Full);
+        self.data.explain = Some(ExplainClause::Full);
         self
     }
 

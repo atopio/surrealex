@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use crate::{
-    enums::Condition,
+    enums::{Condition, ExplainClause, SelectionFields},
     internal_macros::push_clause,
     traits::ToSelectField,
     types::select::{GraphTraversalParams, OrderOptions, OrderTerm, SelectData, SelectField},
@@ -95,6 +95,16 @@ impl FromReady {
         self
     }
 
+    pub fn explain(mut self) -> Self {
+        self.data.explain = Some(ExplainClause::Simple);
+        self
+    }
+
+    pub fn explain_full(mut self) -> Self {
+        self.data.explain = Some(ExplainClause::Full);
+        self
+    }
+
     pub fn build(self) -> String {
         let mut query = String::with_capacity(128);
         push_clause!(query, "SELECT");
@@ -148,6 +158,10 @@ impl FromReady {
         if !self.data.fetch_fields.is_empty() {
             let fetch_fields = self.data.fetch_fields.join(", ");
             push_clause!(query, "FETCH {fetch_fields}");
+        }
+
+        if let Some(explain) = self.data.explain {
+            push_clause!(query, "{explain}");
         }
 
         query

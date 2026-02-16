@@ -5,7 +5,6 @@ pub mod macros;
 
 pub mod builders;
 pub(crate) mod internal_macros;
-pub mod structs;
 pub mod traits;
 pub mod types;
 pub mod versioning;
@@ -13,9 +12,10 @@ pub mod versioning;
 pub use crate::versioning::{SurrealV1, SurrealV2};
 
 use crate::{
-    builders::{delete::DeleteBuilder, select::SelectBuilder},
+    builders::{create::CreateBuilder, delete::DeleteBuilder, select::SelectBuilder},
     enums::SelectionFields,
     types::{
+        create::CreateData,
         delete::DeleteData,
         select::{SelectData, SelectField},
     },

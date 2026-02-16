@@ -50,8 +50,6 @@ fn complex_nested_conditions_render_and_build() {
     assert_eq!(sql, "DELETE FROM posts WHERE (a = 1 AND (b = 2 OR c = 3))");
 }
 
-// --- ONLY clause tests ---
-
 #[test]
 fn only_emits_delete_only_instead_of_delete_from() {
     let sql = QueryBuilder::delete("person:one").only().build();
@@ -83,8 +81,6 @@ fn only_without_return_generates_query_without_validation() {
     let sql = QueryBuilder::delete("person:one").only().build();
     assert_eq!(sql, "DELETE ONLY person:one");
 }
-
-// --- RETURN clause tests ---
 
 #[test]
 fn return_none_clause() {
@@ -134,8 +130,6 @@ fn return_params_accepts_owned_strings() {
     assert_eq!(sql, "DELETE FROM users RETURN id, email");
 }
 
-// --- TIMEOUT clause tests ---
-
 #[test]
 fn timeout_with_seconds() {
     let sql = QueryBuilder::delete("users").timeout("2s").build();
@@ -154,8 +148,6 @@ fn timeout_with_minutes() {
     assert_eq!(sql, "DELETE FROM users TIMEOUT 1m");
 }
 
-// --- EXPLAIN clause tests ---
-
 #[test]
 fn explain_simple() {
     let sql = QueryBuilder::delete("users").explain().build();
@@ -167,8 +159,6 @@ fn explain_full() {
     let sql = QueryBuilder::delete("users").explain_full().build();
     assert_eq!(sql, "DELETE FROM users EXPLAIN FULL");
 }
-
-// --- Combined / chained clause tests ---
 
 #[test]
 fn where_with_return_diff_timeout_and_explain_full() {
@@ -258,8 +248,6 @@ fn complex_nested_conditions_with_return_and_timeout() {
     );
 }
 
-// --- Clause ordering tests ---
-
 #[test]
 fn clauses_are_emitted_in_correct_order_regardless_of_call_order() {
     // The builder should always emit: DELETE [FROM|ONLY] ... WHERE ... RETURN ... TIMEOUT ... EXPLAIN ...
@@ -276,8 +264,6 @@ fn clauses_are_emitted_in_correct_order_regardless_of_call_order() {
         "DELETE FROM data WHERE valid = true RETURN AFTER TIMEOUT 1s EXPLAIN FULL"
     );
 }
-
-// --- Last-write-wins semantics ---
 
 #[test]
 fn calling_return_multiple_times_uses_last_value() {
