@@ -12,11 +12,14 @@ pub mod versioning;
 pub use crate::versioning::{SurrealV1, SurrealV2};
 
 use crate::{
-    builders::{create::CreateBuilder, delete::DeleteBuilder, select::SelectBuilder},
+    builders::{
+        create::CreateBuilder, delete::DeleteBuilder, insert::InsertBuilder, select::SelectBuilder,
+    },
     enums::SelectionFields,
     types::{
         create::CreateData,
         delete::DeleteData,
+        insert::InsertData,
         select::{SelectData, SelectField},
     },
     versioning::select::VersionedSelect,
@@ -57,6 +60,14 @@ impl QueryBuilder {
             ..Default::default()
         };
         CreateBuilder { data }
+    }
+
+    pub fn insert(target: &str) -> InsertBuilder {
+        let data = InsertData {
+            target: target.to_string(),
+            ..Default::default()
+        };
+        InsertBuilder { data }
     }
 
     /// Create a version-aware query builder.
@@ -121,5 +132,13 @@ impl<V> VersionedQueryBuilder<V> {
             ..Default::default()
         };
         CreateBuilder { data }
+    }
+
+    pub fn insert(self, target: &str) -> InsertBuilder {
+        let data = InsertData {
+            target: target.to_string(),
+            ..Default::default()
+        };
+        InsertBuilder { data }
     }
 }
