@@ -1,3 +1,4 @@
+use std::time::Duration;
 use surrealex::{QueryBuilder, enums::Condition};
 
 #[test]
@@ -290,6 +291,129 @@ fn calling_timeout_multiple_times_uses_last_value() {
     let sql = QueryBuilder::delete("users")
         .timeout("1s")
         .timeout("5s")
+        .build();
+
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 5s");
+}
+
+#[test]
+fn timeout_with_std_duration_seconds() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(2))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 2s");
+}
+
+#[test]
+fn timeout_with_std_duration_milliseconds() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_millis(500))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 500ms");
+}
+
+#[test]
+fn timeout_with_std_duration_minutes() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(60))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1m");
+}
+
+#[test]
+fn timeout_with_std_duration_compound_minutes_and_seconds() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(90))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1m30s");
+}
+
+#[test]
+fn timeout_with_std_duration_hours() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(3600))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1h");
+}
+
+#[test]
+fn timeout_with_std_duration_compound_seconds_and_millis() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_millis(1500))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1s500ms");
+}
+
+#[test]
+fn timeout_with_std_duration_nanoseconds() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_nanos(42))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 42ns");
+}
+
+#[test]
+fn timeout_with_std_duration_microseconds() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_micros(250))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 250us");
+}
+
+#[test]
+fn timeout_with_std_duration_days() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(86_400))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1d");
+}
+
+#[test]
+fn timeout_with_std_duration_weeks() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(604_800))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1w");
+}
+
+#[test]
+fn timeout_with_std_duration_years() {
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(365 * 86_400))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1y");
+}
+
+#[test]
+fn timeout_with_std_duration_complex_compound() {
+    // 1 hour + 1 minute + 1 second = 3661 seconds
+    let sql = QueryBuilder::delete("users")
+        .timeout(Duration::from_secs(3661))
+        .build();
+    assert_eq!(sql, "DELETE FROM users TIMEOUT 1h1m1s");
+}
+
+#[test]
+fn all_clauses_combined_with_std_duration_timeout() {
+    let sql = QueryBuilder::delete("logs")
+        .only()
+        .r#where("created_at < '2024-01-01'")
+        .return_none()
+        .timeout(Duration::from_secs(5))
+        .explain_full()
+        .build();
+
+    assert_eq!(
+        sql,
+        "DELETE ONLY logs WHERE created_at < '2024-01-01' RETURN NONE TIMEOUT 5s EXPLAIN FULL"
+    );
+}
+
+#[test]
+fn calling_timeout_multiple_times_with_duration_uses_last_value() {
+    let sql = QueryBuilder::delete("users")
+        .timeout("1s")
+        .timeout(Duration::from_secs(5))
         .build();
 
     assert_eq!(sql, "DELETE FROM users TIMEOUT 5s");

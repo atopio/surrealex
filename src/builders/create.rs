@@ -1,6 +1,7 @@
 use crate::{
     enums::ReturnClause,
     internal_macros::push_clause,
+    traits::IntoTimeout,
     types::create::{ContentMode, CreateData, SetField},
 };
 use std::fmt::Write;
@@ -126,11 +127,32 @@ impl CreateBuilder {
         self
     }
 
-    /// Sets the TIMEOUT clause with a raw SurrealQL duration string.
+    /// Sets the TIMEOUT clause.
     ///
-    /// Accepts SurrealQL duration syntax such as `"500ms"`, `"2s"`, `"1m"`.
-    pub fn timeout(mut self, duration: &str) -> Self {
-        self.data.timeout = Some(duration.to_string());
+    /// Accepts either a raw SurrealQL duration string (e.g. `"500ms"`, `"2s"`, `"1m"`)
+    /// or a [`std::time::Duration`], which is automatically converted to SurrealQL syntax.
+    ///
+    /// # Examples
+    /// ```
+    /// # use surrealex::QueryBuilder;
+    /// use std::time::Duration;
+    ///
+    /// // Raw string
+    /// let sql = QueryBuilder::create("person")
+    ///     .content("{ name: 'Tobie' }")
+    ///     .timeout("2s")
+    ///     .build();
+    /// assert_eq!(sql, "CREATE person CONTENT { name: 'Tobie' } TIMEOUT 2s");
+    ///
+    /// // std::time::Duration
+    /// let sql = QueryBuilder::create("person")
+    ///     .content("{ name: 'Tobie' }")
+    ///     .timeout(Duration::from_secs(2))
+    ///     .build();
+    /// assert_eq!(sql, "CREATE person CONTENT { name: 'Tobie' } TIMEOUT 2s");
+    /// ```
+    pub fn timeout(mut self, duration: impl IntoTimeout) -> Self {
+        self.data.timeout = Some(duration.into_timeout());
         self
     }
 
