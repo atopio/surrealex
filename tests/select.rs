@@ -510,6 +510,171 @@ fn select_star_and_subquery_field_builds() {
 }
 
 #[test]
+fn order_by_field_with_trailing_desc_uses_default_asc() {
+    // Suffix "DESC" is stripped; OrderOptions::default() => Sort::Asc applies.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .order_by(
+            "name DESC",
+            surrealex::types::select::OrderOptions::default(),
+        )
+        .build();
+    assert_eq!(sql, "SELECT id FROM users ORDER BY name ASC");
+}
+
+#[test]
+fn order_by_field_with_trailing_desc_and_explicit_desc_no_duplication() {
+    // Suffix "DESC" is stripped; explicit Sort::Desc still produces a single DESC.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .order_by("name DESC", Sort::Desc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM users ORDER BY name DESC");
+}
+
+#[test]
+fn order_by_field_with_trailing_desc_explicit_asc_wins() {
+    // Suffix "DESC" is stripped and discarded; explicit Sort::Asc wins.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .order_by("name DESC", Sort::Asc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM users ORDER BY name ASC");
+}
+
+#[test]
+fn order_by_function_call_with_trailing_desc_uses_default_asc() {
+    // Suffix after closing paren is stripped; default Sort::Asc applies.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("users")
+        .order_by("LOWER(name) DESC", ())
+        .build();
+    assert_eq!(sql, "SELECT id FROM users ORDER BY LOWER(name) ASC");
+}
+
+#[test]
+fn order_by_collate_numeric_desc_combination_all_stripped() {
+    // All three trailing modifiers are stripped; default Sort::Asc applies.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("scores")
+        .order_by("score COLLATE NUMERIC DESC", ())
+        .build();
+    assert_eq!(sql, "SELECT id FROM scores ORDER BY score ASC");
+}
+
+#[test]
+fn order_by_trailing_asc_stripped_explicit_desc_wins() {
+    // Trailing "ASC" in field is stripped; explicit Sort::Desc applies.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("name ASC", Sort::Desc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY name DESC");
+}
+
+#[test]
+fn order_by_trailing_numeric_stripped_explicit_sort_applies() {
+    // Trailing "NUMERIC" is stripped; explicit Sort::Asc applies.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("score NUMERIC", Sort::Asc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY score ASC");
+}
+
+#[test]
+fn order_by_no_trailing_modifier_unchanged() {
+    // No suffix present — field passes through unmodified.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("name", Sort::Desc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY name DESC");
+}
+
+#[test]
+fn order_by_lowercase_trailing_desc_stripped() {
+    // Stripping is case-insensitive; lowercase "desc" is stripped.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("name desc", Sort::Asc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY name ASC");
+}
+
+#[test]
+fn order_by_mixed_case_trailing_modifier_stripped() {
+    // Mixed-case modifier is stripped.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("name Desc", Sort::Desc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY name DESC");
+}
+
+#[test]
+fn order_by_field_name_containing_desc_substring_not_stripped() {
+    // "described" does not end with the token " DESC", so nothing is stripped.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("described", Sort::Asc)
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY described ASC");
+}
+
+#[test]
+fn order_by_explicit_numeric_collate_options_still_applied_after_sanitize() {
+    // Even when a suffix is present, explicit numeric+collate flags from Sort::Desc are kept.
+    let sql = QueryBuilder::select(surrealex::fields!("id"))
+        .from("t")
+        .order_by("name DESC", Sort::Desc.collate().numeric())
+        .build();
+    assert_eq!(sql, "SELECT id FROM t ORDER BY name COLLATE NUMERIC DESC");
+}
+
+#[test]
+fn sanitize_field_strips_single_desc() {
+    use surrealex::types::select::OrderTerm;
+    let field = OrderTerm::sanitize_field("name DESC");
+    assert_eq!(field, "name");
+}
+
+#[test]
+fn sanitize_field_strips_collate_numeric_desc_chain() {
+    use surrealex::types::select::OrderTerm;
+    let field = OrderTerm::sanitize_field("score COLLATE NUMERIC DESC");
+    assert_eq!(field, "score");
+}
+
+#[test]
+fn sanitize_field_strips_suffix_after_function_call() {
+    use surrealex::types::select::OrderTerm;
+    let field = OrderTerm::sanitize_field("LOWER(name) DESC");
+    assert_eq!(field, "LOWER(name)");
+}
+
+#[test]
+fn sanitize_field_no_modifier_returns_unchanged() {
+    use surrealex::types::select::OrderTerm;
+    let field = OrderTerm::sanitize_field("name");
+    assert_eq!(field, "name");
+}
+
+#[test]
+fn sanitize_field_case_insensitive_strip() {
+    use surrealex::types::select::OrderTerm;
+    let field = OrderTerm::sanitize_field("name desc");
+    assert_eq!(field, "name");
+}
+
+#[test]
+fn sanitize_field_embedded_desc_substring_not_stripped() {
+    use surrealex::types::select::OrderTerm;
+    let field = OrderTerm::sanitize_field("described");
+    assert_eq!(field, "described");
+}
+
+#[test]
 fn explain_simple_builds() {
     let sql = QueryBuilder::select(surrealex::fields!("id"))
         .from("users")

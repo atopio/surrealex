@@ -59,11 +59,22 @@ impl FromReady {
         self
     }
 
+    /// Adds an `ORDER BY` term for the given field and options.
+    ///
+    /// Trailing SurrealDB order modifiers embedded in `field` (`ASC`, `DESC`,
+    /// `NUMERIC`, `COLLATE`) are automatically stripped and discarded before
+    /// building the term. Final ordering is determined exclusively by the
+    /// explicit `order` argument (or its defaults when none is provided).
+    ///
+    /// This prevents duplicate tokens such as `"name DESC DESC"` when callers
+    /// accidentally include direction keywords in the field string.
     pub fn order_by(mut self, field: &str, order: impl Into<OrderOptions>) -> Self {
+        let sanitized_field = OrderTerm::sanitize_field(field);
+
         let opt = order.into();
 
         let order_term = OrderTerm {
-            field: field.to_string(),
+            field: sanitized_field,
             direction: opt.direction,
             numeric: opt.numeric,
             collate: opt.collate,
