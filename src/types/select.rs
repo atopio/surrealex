@@ -30,6 +30,57 @@ pub struct OrderTerm {
     pub collate: bool,
 }
 
+impl OrderTerm {
+    /// Strips trailing SurrealDB order modifiers (`ASC`, `DESC`, `NUMERIC`, `COLLATE`)
+    /// from the end of a field string.
+    ///
+    /// Returns the sanitized field string (trailing modifiers removed).
+    /// Any trailing modifiers are discarded by this function and are not returned;
+    /// they are intended only for diagnostics in callers and do not influence ordering.
+    /// Final ordering is always determined by the explicit [`OrderOptions`]/[`Sort`]
+    /// provided to the API.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use surrealex::types::select::OrderTerm;
+    /// let field = OrderTerm::sanitize_field("name DESC");
+    /// assert_eq!(field, "name");
+    ///
+    /// let field = OrderTerm::sanitize_field("score COLLATE NUMERIC DESC");
+    /// assert_eq!(field, "score");
+    ///
+    /// let field = OrderTerm::sanitize_field("LOWER(name) DESC");
+    /// assert_eq!(field, "LOWER(name)");
+    /// ```
+    pub fn sanitize_field(s: &str) -> String {
+        const MODIFIERS: &[&str] = &["ASC", "DESC", "NUMERIC", "COLLATE"];
+
+        let mut remaining = s.trim_end().to_string();
+
+        loop {
+            let upper = remaining.to_ascii_uppercase();
+            let mut found = false;
+
+            for &modifier in MODIFIERS {
+                let suffix = format!(" {modifier}");
+                if upper.ends_with(&suffix) {
+                    let new_len = remaining.len() - suffix.len();
+                    remaining = remaining[..new_len].trim_end().to_string();
+                    found = true;
+                    break;
+                }
+            }
+
+            if !found {
+                break;
+            }
+        }
+
+        remaining
+    }
+}
+
 impl Display for OrderTerm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.numeric && self.collate {
